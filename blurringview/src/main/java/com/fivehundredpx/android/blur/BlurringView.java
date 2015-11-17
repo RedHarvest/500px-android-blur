@@ -6,12 +6,18 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.drawable.ColorDrawable;
 import android.support.v8.renderscript.Allocation;
 import android.support.v8.renderscript.Element;
 import android.support.v8.renderscript.RenderScript;
 import android.support.v8.renderscript.ScriptIntrinsicBlur;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.View;
 
 /**
@@ -21,6 +27,12 @@ import android.view.View;
  * After that, call {@link #invalidate()} to trigger blurring whenever necessary.
  */
 public class BlurringView extends View {
+
+    private Paint paint;
+    private Rect rect;
+    private RectF rectF;
+    private PorterDuffXfermode mode;
+    private float cornerRadius;
 
     public BlurringView(Context context) {
         this(context, null);
@@ -42,6 +54,11 @@ public class BlurringView extends View {
                 defaultDownsampleFactor));
         setOverlayColor(a.getColor(R.styleable.PxBlurringView_overlayColor, defaultOverlayColor));
         a.recycle();
+
+        paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        rect = new Rect(0, 0, 0, 0);
+        rectF = new RectF(rect);
+        setBorderRadius(10);
     }
 
     public void setBlurredView(View blurredView) {
@@ -51,6 +68,7 @@ public class BlurringView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+
         if (mBlurredView != null) {
             if (prepare()) {
                 // If the background of the blurred view is a color drawable, we use it to clear
@@ -64,7 +82,6 @@ public class BlurringView extends View {
 
                 mBlurredView.draw(mBlurringCanvas);
                 blur();
-
                 canvas.save();
                 canvas.translate(mBlurredView.getX() - getX(), mBlurredView.getY() - getY());
                 canvas.scale(mDownsampleFactor, mDownsampleFactor);
@@ -77,6 +94,10 @@ public class BlurringView extends View {
 
     public void setBlurRadius(int radius) {
         mBlurScript.setRadius(radius);
+    }
+
+    public void setBorderRadius(int pixelsInDp) {
+        cornerRadius = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, pixelsInDp, getContext().getResources().getDisplayMetrics());
     }
 
     public void setDownsampleFactor(int factor) {
