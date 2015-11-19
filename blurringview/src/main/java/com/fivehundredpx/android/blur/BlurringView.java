@@ -12,6 +12,7 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.LayerDrawable;
 import android.support.v8.renderscript.Allocation;
 import android.support.v8.renderscript.Element;
 import android.support.v8.renderscript.RenderScript;
@@ -32,6 +33,7 @@ public class BlurringView extends View {
     private Rect rect;
     private RectF rectF;
     private PorterDuffXfermode mode;
+    private int[] pos1 = {0,0}, pos2 = {0,0};
     private float cornerRadius;
 
     public BlurringView(Context context) {
@@ -76,15 +78,20 @@ public class BlurringView extends View {
                 // as well; otherwise we clear the blurring canvas with a transparent color.
                 if (mBlurredView.getBackground() != null && mBlurredView.getBackground() instanceof ColorDrawable){
                     mBitmapToBlur.eraseColor(((ColorDrawable) mBlurredView.getBackground()).getColor());
-                }else {
+                } else {
                     mBitmapToBlur.eraseColor(Color.TRANSPARENT);
                 }
 
                 mBlurredView.draw(mBlurringCanvas);
                 blur();
                 canvas.save();
-                canvas.translate(mBlurredView.getX() - getX(), mBlurredView.getY() - getY());
+                mBlurredView.getLocationOnScreen(pos1);
+                getLocationOnScreen(pos2);
+                canvas.translate(pos1[0] - pos2[0], pos1[1] - pos2[1]);
                 canvas.scale(mDownsampleFactor, mDownsampleFactor);
+                if (mBlurredView.getBackground() != null && mBlurredView.getBackground() instanceof LayerDrawable) {
+                    ((LayerDrawable) mBlurredView.getBackground()).getDrawable(0).draw(canvas);
+                }
                 canvas.drawBitmap(mBlurredBitmap, 0, 0, null);
                 canvas.restore();
             }
