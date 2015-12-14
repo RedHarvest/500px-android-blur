@@ -6,19 +6,14 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
-import android.graphics.Rect;
-import android.graphics.RectF;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.LayerDrawable;
+import android.os.Build;
 import android.support.v8.renderscript.Allocation;
 import android.support.v8.renderscript.Element;
 import android.support.v8.renderscript.RenderScript;
 import android.support.v8.renderscript.ScriptIntrinsicBlur;
 import android.util.AttributeSet;
-import android.util.TypedValue;
 import android.view.View;
 
 /**
@@ -29,12 +24,7 @@ import android.view.View;
  */
 public class BlurringView extends View {
 
-    private Paint paint;
-    private Rect rect;
-    private RectF rectF;
-    private PorterDuffXfermode mode;
     private int[] pos1 = {0,0}, pos2 = {0,0};
-    private float cornerRadius;
 
     public BlurringView(Context context) {
         this(context, null);
@@ -48,19 +38,26 @@ public class BlurringView extends View {
         final int defaultDownsampleFactor = res.getInteger(R.integer.default_downsample_factor);
         final int defaultOverlayColor = res.getColor(R.color.default_overlay_color);
 
-        initializeRenderScript(context);
-
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.PxBlurringView);
-        setBlurRadius(a.getInt(R.styleable.PxBlurringView_blurRadius, defaultBlurRadius));
-        setDownsampleFactor(a.getInt(R.styleable.PxBlurringView_downsampleFactor,
-                defaultDownsampleFactor));
+        if (isSupported()) {
+            initializeRenderScript(context);
+
+            setBlurRadius(a.getInt(R.styleable.PxBlurringView_blurRadius, defaultBlurRadius));
+            setDownsampleFactor(a.getInt(R.styleable.PxBlurringView_downsampleFactor,
+                    defaultDownsampleFactor));
+        }
         setOverlayColor(a.getColor(R.styleable.PxBlurringView_overlayColor, defaultOverlayColor));
         a.recycle();
+    }
 
-        paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        rect = new Rect(0, 0, 0, 0);
-        rectF = new RectF(rect);
-        setBorderRadius(10);
+    private boolean isSupported() {
+        String abi;
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            abi = Build.CPU_ABI;
+        } else {
+            abi = Build.SUPPORTED_ABIS[0];
+        }
+        return !abi.equals("armeabi");
     }
 
     public void setBlurredView(View blurredView) {
@@ -103,10 +100,6 @@ public class BlurringView extends View {
         mBlurScript.setRadius(radius);
     }
 
-    public void setBorderRadius(int pixelsInDp) {
-        cornerRadius = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, pixelsInDp, getContext().getResources().getDisplayMetrics());
-    }
-
     public void setDownsampleFactor(int factor) {
         if (factor <= 0) {
             throw new IllegalArgumentException("Downsample factor must be greater than 0.");
@@ -128,6 +121,9 @@ public class BlurringView extends View {
     }
 
     protected boolean prepare() {
+        if (!isSupported()) {
+            return false;
+        }
         final int width = mBlurredView.getWidth();
         final int height = mBlurredView.getHeight();
 
