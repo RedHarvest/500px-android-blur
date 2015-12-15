@@ -39,14 +39,15 @@ public class BlurringView extends View {
         final int defaultOverlayColor = res.getColor(R.color.default_overlay_color);
 
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.PxBlurringView);
+        setOverlayColor(Color.argb(125, 0, 0, 0));
         if (isSupported()) {
             initializeRenderScript(context);
 
             setBlurRadius(a.getInt(R.styleable.PxBlurringView_blurRadius, defaultBlurRadius));
             setDownsampleFactor(a.getInt(R.styleable.PxBlurringView_downsampleFactor,
                     defaultDownsampleFactor));
+            setOverlayColor(a.getColor(R.styleable.PxBlurringView_overlayColor, defaultOverlayColor));
         }
-        setOverlayColor(a.getColor(R.styleable.PxBlurringView_overlayColor, defaultOverlayColor));
         a.recycle();
     }
 
