@@ -47,6 +47,8 @@ public class BlurringView extends View {
             setDownsampleFactor(a.getInt(R.styleable.PxBlurringView_downsampleFactor,
                     defaultDownsampleFactor));
             setOverlayColor(a.getColor(R.styleable.PxBlurringView_overlayColor, defaultOverlayColor));
+        } else {
+            setBackgroundColor(Color.TRANSPARENT);
         }
         a.recycle();
     }
