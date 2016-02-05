@@ -24,8 +24,8 @@ import android.view.View;
  */
 public class BlurringView extends View {
 
+    private boolean canRenderScript = false;
     private int[] pos1 = {0,0}, pos2 = {0,0};
-    private boolean canRenderScript;
 
     public BlurringView(Context context) {
         this(context, null);
@@ -41,13 +41,15 @@ public class BlurringView extends View {
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.PxBlurringView);
         setOverlayColor(Color.argb(125, 0, 0, 0));
 
-        if (isSupported() && initializeRenderScript(context)) {
+        if (isSupported()) {
+            canRenderScript = initializeRenderScript(context);
+        }
+        if (canRenderScript) {
             setBlurRadius(a.getInt(R.styleable.PxBlurringView_blurRadius, defaultBlurRadius));
             setDownsampleFactor(a.getInt(R.styleable.PxBlurringView_downsampleFactor,
                     defaultDownsampleFactor));
             setOverlayColor(a.getColor(R.styleable.PxBlurringView_overlayColor, defaultOverlayColor));
         } else {
-            canRenderScript = false;
             setBackgroundColor(Color.TRANSPARENT);
         }
         a.recycle();
@@ -126,10 +128,8 @@ public class BlurringView extends View {
         try {
             mRenderScript = RenderScript.create(context);
             mBlurScript = ScriptIntrinsicBlur.create(mRenderScript, Element.U8_4(mRenderScript));
-            canRenderScript = true;
             return true;
         } catch (Exception e) {
-            canRenderScript = false;
             return false;
         }
     }
