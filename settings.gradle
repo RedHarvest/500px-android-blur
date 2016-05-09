@@ -1,1 +1,2 @@
-include ':app', ':blurringview'
+// remove this allows parent project to build with gradle 2.1
+//include ':app', ':blurringview'
